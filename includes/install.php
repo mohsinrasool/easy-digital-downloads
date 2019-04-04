@@ -448,25 +448,27 @@ function edd_install_settings() {
  * When a new Blog is created in multisite, see if EDD is network activated, and run the installer
  *
  * @since  2.5
- * @param  int    $blog_id The Blog ID created
- * @param  int    $user_id The User ID set as the admin
- * @param  string $domain  The URL
- * @param  string $path    Site Path
- * @param  int    $site_id The Site ID
- * @param  array  $meta    Blog Meta
+ * @param  int|WP_Site $blog WordPres 5.1+ uses a WP_Site object.
  * @return void
  */
-function edd_new_blog_created( $blog_id ) {
+function edd_new_blog_created( $blog ) {
 
 	// Bail if plugin is not activated for the network
 	if ( ! is_plugin_active_for_network( plugin_basename( EDD_PLUGIN_FILE ) ) ) {
 		return;
 	}
 
-	// Run the installation for this site
-	edd_run_install( $blog_id );
+	if ( ! is_int( $blog ) ) {
+		$blog = $blog->id;
+	}
+
+	edd_run_install( $blog );
 }
-add_action( 'wpmu_new_blog', 'edd_new_blog_created', 10 );
+if ( version_compare( get_bloginfo( 'version' ), '5.1', '>=' ) ) {
+	add_action( 'wp_initialize_site', 'edd_new_blog_created' );
+} else {
+	add_action( 'wpmu_new_blog', 'edd_new_blog_created' );
+}
 
 /**
  * Post-installation
